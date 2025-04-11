@@ -1,123 +1,138 @@
 # Ubuntu Text Capture
 
-A Python-based tool that allows you to capture a selected area of the screen, extract text from it using Tesseract OCR, and copy the extracted text directly to the clipboard. This tool provides functionality similar to the text extraction feature in Windows PowerToys.
+A modern, Python-based OCR utility with a graphical interface to capture and extract text (including LaTeX math!) from your screen or images.
 
-## Features
+> 🧭 **Inspired by** [edwineas/ubuntu-text-capture](https://github.com/edwineas/ubuntu-text-capture)  
+> This project builds upon Edwin's original script by adding a full-featured GUI, multiple OCR engine support (including LaTeX), theme toggling, and cross-platform compatibility.
+---
 
-- Capture a portion of the screen.
-- Extract text from the captured screenshot using Tesseract OCR.
-- Automatically copy the extracted text to the clipboard.
+## ✨ Features
 
-**Support:** If you find this tool useful, please consider giving it a ⭐ on GitHub! Your support helps improve the project and ensures continued development.
+- 📸 Capture screen region or open an image
+- 🧠 Extract text using:
+  - EasyOCR
+  - PyTesseract
+  - **LaTeX OCR** (`pix2tex`) — for mathematical expressions!
+- 🌗 Toggle between light and dark themes
+- 🖥️ Clean, responsive GUI with real-time feedback
+- 📋 Automatically copies recognized text to clipboard
+- 💾 Save screenshots or extracted image
 
+---
 
-## Requirements
+## 🧠 OCR for Math? Absolutely.
 
-- **Ubuntu** or any Linux distribution with GNOME.
-- Python 3.x.
-- `gnome-screenshot` for capturing the screenshot.
-- `Tesseract OCR` for extracting text.
+This tool supports **LaTeX OCR**, allowing it to extract and render **mathematical equations** from handwritten or printed screenshots — perfect for students, researchers, and anyone dealing with math-heavy documents.
 
-## System Dependencies
+---
 
-You will need to install several dependencies manually. Here are the commands to install each component individually.
+## 📷 Demo
 
-```bash
-sudo apt update 
-```
-```bash
-sudo apt install gnome-screenshot
-```
-```bash
-sudo apt install tesseract-ocr 
-```
-```bash
-sudo apt install libtesseract-dev
-```
-```bash
-sudo apt install xclip
-```
-```bash
-sudo apt install python3-venv
-```
+### 🧮 Math Screenshot
 
+![Math Screenshot](./resources/screenshots/math.png)
 
-This commands will:
-- Update your package lists.
-- Install all the required dependencies (`gnome-screenshot`, `tesseract-ocr`, `libtesseract-dev`, `xclip`, and `python3-venv`).
+### 📃 Simple Text Screenshot
 
+![Simple Screenshot](./resources/screenshots/simple.png)
 
-## Installation
+---
 
-### 1. Clone the Repository
+## 🧰 Requirements
 
-First, clone this repository to your local machine:
+- Python 3.8+
+- `Tesseract OCR`
+- Optional: `pix2tex` (`LatexOCR`) for math equation support
+
+---
+
+## ⚙️ System Dependencies (Linux)
 
 ```bash
-git clone https://github.com/edwineas/ubuntu-text-capture.git
-```
-or
-
-```bash
-git@github.com:edwineas/ubuntu-text-capture.git
+sudo apt update
+sudo apt install gnome-screenshot tesseract-ocr libtesseract-dev xclip python3-venv
 ```
 
+---
+
+## 📦 Installation
+
+### 1. Clone the repository
+
 ```bash
+git clone https://github.com/r4j4-s/ubuntu-text-capture.git
 cd ubuntu-text-capture
 ```
 
+_or using SSH:_
 
-### 2. Run the Installation Script
+```bash
+git clone git@github.com:r4j4-s/ubuntu-text-capture.git
+cd ubuntu-text-capture
+```
 
-The installation script will:
-- Create a virtual environment and install the required Python dependencies.
-- Create the `text_capture.sh` script, which you can use to run the tool manually or as part of a custom keyboard shortcut.
-
-Run the following command:
+### 2. Run the installer
 
 ```bash
 sudo ./install.sh
 ```
 
-### 3. Path to `text_capture.sh`
+This will:
+- Create a Python virtual environment
+- Install dependencies (e.g., `easyocr`, `pytesseract`, optional `pix2tex`)
+- Create a launcher script: `text_capture.sh`
 
-After running the installation script, the `text_capture.sh` script will be located at:
+---
 
-### 4. Manually Create a Keyboard Shortcut
+## 🚀 How to Use
 
-To manually create a keyboard shortcut that triggers the text capture:
-
-1. Open **Settings** > **Keyboard** > **View and Customize Shortcuts** > **Custom Shortcuts**.
-2. Click **+** to add a new shortcut.
-3. Set the **Name** to "Text Capture."
-4. In the **Command** field, enter the full path to the `text_capture.sh` script (e.g., `/home/username/ubuntu-text-capture/text_capture.sh`).
-5. Set the **Shortcut** to `Shift + Ctrl + T` (or your preferred key combination).
-6. Save the shortcut.
-
-Now, pressing the shortcut will trigger the text capture process.
-
-## How to Use
-
-Once the installation is complete, you can use the tool in two ways:
-
-1. **Via Terminal**:
-   
-   Run the following command:
+### ▶️ Run from terminal
 
 ```bash
 ./text_capture.sh
 ```
-You will be prompted to select a portion of the screen. The extracted text will be copied to your clipboard.
 
-2. **Via Keyboard Shortcut** (if manually created):
+A GUI will open where you can:
+- Take a screenshot
+- Open an image file
+- Select an OCR engine
+- View and copy extracted text
 
-Press `Shift + Ctrl + T` (or the custom shortcut you created) to activate the tool.
+### ⌨️ Optional: Keyboard Shortcut (Linux)
 
-**Note:** This is a basic implementation, and there may be occasional inaccuracies or errors in text extraction. Feel free to contribute and improve the tool!
+Set up a shortcut like `Ctrl+Shift+T` to launch the app via:
 
+1. **Settings → Keyboard → Custom Shortcuts**
+2. Name: `Text Capture`
+3. Command: `/full/path/to/text_capture.sh`
+4. Shortcut: `Ctrl + Shift + T`
 
-## License
+---
 
-This project is licensed under the MIT License. See the `LICENSE` file for more details.
+## 🔍 OCR Engine Options
 
+You can select the OCR engine from the dropdown in the GUI:
 
+| Engine       | Purpose                                         |
+|--------------|--------------------------------------------------|
+| EasyOCR      | General purpose text recognition                 |
+| PyTesseract  | Fast, lightweight, uses Tesseract                |
+| LaTeX OCR    | Recognizes mathematical expressions via `pix2tex`|
+
+> ⚠️ Make sure Tesseract is installed and added to your system path.  
+> LaTeX OCR requires installing `pix2tex` via `pip install pix2tex`.
+
+---
+
+## 💬 Support & Contributions
+
+If you find this tool useful, please ⭐ the repo!  
+It motivates further improvements and encourages open-source development.
+
+Issues and PRs are welcome!
+
+---
+
+## 📄 License
+
+MIT License – see the [LICENSE](./LICENSE) file for details.
