@@ -1,9 +1,11 @@
 packaging==24.1
-pillow==10.4.0
 pyperclip==1.9.0
 pytesseract==0.3.13
-pandas
-numpy
-pillow
-pyperclip
-sv-ttk
+pandas==2.2.3
+numpy==2.2.4
+pillow==11.1.0
+sv-ttk==2.6.0
+easyocr
+pix2tex
+timm==0.3.2
+transformers==4.2.2
