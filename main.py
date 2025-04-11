@@ -11,7 +11,6 @@ import pyperclip
 import tkinter as tk
 from tkinter import ttk, messagebox, filedialog
 import threading
-from transformers import TrOCRProcessor, VisionEncoderDecoderModel
 import torch
 
 # Optional sv_ttk import with fallback
@@ -34,8 +33,6 @@ all_labels = []
 reader = None  # Will be initialized when needed
 latex_ocr = None  # Will be initialized when needed
 current_ocr_engine = "easyocr"  # Default OCR engine
-trocr_processor = None
-trocr_model = None
 
 
 def update_colors(theme):
@@ -130,11 +127,6 @@ def initialize_ocr(engine=None):
                 root.config(cursor="")
                 return False
             latex_ocr = LatexOCR()
-        elif current_ocr_engine == "trocr":
-            global trocr_processor, trocr_model
-            if trocr_processor is None or trocr_model is None:
-                trocr_processor = TrOCRProcessor.from_pretrained("microsoft/trocr-base-handwritten")
-                trocr_model = VisionEncoderDecoderModel.from_pretrained("microsoft/trocr-base-handwritten")
 
         
         # Restore cursor
@@ -163,7 +155,6 @@ def change_ocr_engine(event):
         "easyocr": "EasyOCR: General purpose OCR with good language support",
         "pytesseract": "Pytesseract: Fast OCR based on Google's Tesseract engine",
         "latexocr": "LatexOCR: Specialized for mathematical equations and LaTeX",
-        "trocr": "TrOCR: Transformer-based model for handwritten OCR",
     }
     
     status_message = f"Changed to {engine_info.get(current_ocr_engine, '')}"
@@ -412,14 +403,6 @@ def process_screenshot(screenshot_path):
                 text = latex_ocr(screenshot)
             else:
                 text = "LatexOCR not properly initialized. Please install pix2tex package."
-        elif current_ocr_engine == "trocr":
-            if trocr_model is None or trocr_processor is None:
-                raise RuntimeError("TrOCR model is not initialized")
-
-            pixel_values = trocr_processor(images=screenshot, return_tensors="pt").pixel_values
-            generated_ids = trocr_model.generate(pixel_values)
-            text = trocr_processor.batch_decode(generated_ids, skip_special_tokens=True)[0]
-
         else:
             text = "Unknown OCR engine selected."
 
@@ -605,7 +588,7 @@ def show_gui(original_image=None, text=None):
     # OCR Engine Combobox
     ocr_engine_combo = ttk.Combobox(
         ocr_engine_frame,
-        values=["EasyOCR", "PyTesseract", "LatexOCR", "TrOCR"],
+        values=["EasyOCR", "PyTesseract", "LatexOCR"],
         width=15,
         state="readonly"
     )
