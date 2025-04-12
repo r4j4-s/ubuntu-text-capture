@@ -3,6 +3,8 @@ VENV_DIR="$PROJECT_DIR/venv"
 REQUIREMENTS_FILE="$PROJECT_DIR/requirements.txt"
 SCRIPT_PATH="$PROJECT_DIR/text_capture.sh"
 
+sudo apt install gnome-screenshot tesseract-ocr-all libtesseract-dev xclip python3-venv
+
 setup_venv() {
     if [ ! -d "$VENV_DIR" ]; then
         echo "Creating Python virtual environment..."

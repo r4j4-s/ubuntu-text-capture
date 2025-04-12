@@ -4,14 +4,12 @@ import subprocess
 import tempfile
 import platform
 import traceback
-import easyocr
 import pytesseract
 from PIL import Image, ImageTk
 import pyperclip
 import tkinter as tk
 from tkinter import ttk, messagebox, filedialog
 import threading
-import torch
 
 # Optional sv_ttk import with fallback
 try:
@@ -30,9 +28,9 @@ except ImportError:
 # Global variables for theme management
 current_theme = "light"
 all_labels = []
-reader = None  # Will be initialized when needed
 latex_ocr = None  # Will be initialized when needed
-current_ocr_engine = "easyocr"  # Default OCR engine
+current_ocr_engine = "pytesseract"  # Default OCR engine
+current_tesseract_lang = "eng"  # Default language for Tesseract
 
 
 def update_colors(theme):
@@ -51,6 +49,10 @@ def update_colors(theme):
         img_header.configure(bg="#313244")
         theme_frame.configure(bg="#313244")
         ocr_engine_frame.configure(bg="#313244")
+        
+        # Update language frame if it exists
+        if 'tesseract_lang_frame' in globals():
+            tesseract_lang_frame.configure(bg="#313244")
         
         # Update all labels
         for label in all_labels:
@@ -71,6 +73,10 @@ def update_colors(theme):
         img_header.configure(bg="#e8e8ef")
         theme_frame.configure(bg="#e8e8ef")
         ocr_engine_frame.configure(bg="#e8e8ef")
+        
+        # Update language frame if it exists
+        if 'tesseract_lang_frame' in globals():
+            tesseract_lang_frame.configure(bg="#e8e8ef")
         
         # Update all labels
         for label in all_labels:
@@ -99,7 +105,7 @@ def toggle_theme():
 
 def initialize_ocr(engine=None):
     """Initialize the OCR reader if not already done"""
-    global reader, latex_ocr, current_ocr_engine
+    global latex_ocr, current_ocr_engine
     
     if engine:
         current_ocr_engine = engine
@@ -109,9 +115,7 @@ def initialize_ocr(engine=None):
         root.config(cursor="watch")
         root.update()
         
-        if current_ocr_engine == "easyocr" and reader is None:
-            reader = easyocr.Reader(['de'], gpu=False)
-        elif current_ocr_engine == "pytesseract":
+        if current_ocr_engine == "pytesseract":
             # Check if pytesseract is installed and configured
             try:
                 pytesseract.get_tesseract_version()
@@ -127,7 +131,6 @@ def initialize_ocr(engine=None):
                 root.config(cursor="")
                 return False
             latex_ocr = LatexOCR()
-
         
         # Restore cursor
         root.config(cursor="")
@@ -139,7 +142,7 @@ def initialize_ocr(engine=None):
 
 def change_ocr_engine(event):
     """Handle changing the OCR engine"""
-    global current_ocr_engine, ocr_engine_combo
+    global current_ocr_engine, ocr_engine_combo, tesseract_lang_frame
     
     new_engine = ocr_engine_combo.get().lower().replace(' ', '')
     
@@ -150,9 +153,14 @@ def change_ocr_engine(event):
     # Initialize the new engine
     current_ocr_engine = new_engine
     
+    # Show/hide tesseract language selector based on selected engine
+    if current_ocr_engine == "pytesseract" and 'tesseract_lang_frame' in globals():
+        tesseract_lang_frame.pack(side=tk.LEFT, padx=10)
+    elif 'tesseract_lang_frame' in globals():
+        tesseract_lang_frame.pack_forget()
+    
     # Show information about the engine
     engine_info = {
-        "easyocr": "EasyOCR: General purpose OCR with good language support",
         "pytesseract": "Pytesseract: Fast OCR based on Google's Tesseract engine",
         "latexocr": "LatexOCR: Specialized for mathematical equations and LaTeX",
     }
@@ -162,6 +170,16 @@ def change_ocr_engine(event):
     
     # Initialize the engine if needed
     threading.Thread(target=initialize_ocr, args=(current_ocr_engine,), daemon=True).start()
+
+def change_tesseract_language(event):
+    """Handle changing the Tesseract language"""
+    global current_tesseract_lang, tesseract_lang_combo
+    
+    new_lang = tesseract_lang_combo.get().split(' - ')[0]
+    current_tesseract_lang = new_lang
+    
+    # Show info about selected language
+    img_info_label.config(text=f"Tesseract language set to: {new_lang}")
 
 def capture_screenshot():
     # Check if OCR is initialized before taking a screenshot
@@ -376,25 +394,9 @@ def process_screenshot(screenshot_path):
 
     try:
         # Process based on selected OCR engine
-        if current_ocr_engine == "easyocr":
-            # Use direct path for EasyOCR if file exists on disk
-            if os.path.exists(screenshot_path):
-                results = reader.readtext(screenshot_path)
-            else:
-                # Save temporarily as EasyOCR sometimes works better with path
-                temp_path = os.path.join(tempfile.gettempdir(), "easyocr_temp_image.png")
-                screenshot.save(temp_path)
-                results = reader.readtext(temp_path)
-                try:
-                    os.remove(temp_path)
-                except:
-                    pass
-            # Combine all text blocks into one string
-            text = "\n".join([line[1] for line in results]).strip()
-            
-        elif current_ocr_engine == "pytesseract":
-            # Use pytesseract for OCR
-            text = pytesseract.image_to_string(screenshot)
+        if current_ocr_engine == "pytesseract":
+            # Use pytesseract for OCR with selected language
+            text = pytesseract.image_to_string(screenshot, lang=current_tesseract_lang)
             
         elif current_ocr_engine == "latexocr":
             # Use LatexOCR for math equation recognition
@@ -525,11 +527,11 @@ def save_image(img):
 def show_gui(original_image=None, text=None):
     global root, text_widget, canvas, text_card, image_card
     global title_frame, text_header, img_header, img_info_label, theme_frame, theme_toggle
-    global state, ocr_engine_combo, ocr_engine_frame
+    global state, ocr_engine_combo, ocr_engine_frame, tesseract_lang_frame, tesseract_lang_combo
 
     root = tk.Tk()
     root.title("Screenshot OCR")
-    root.geometry("1200x700")
+    root.geometry("1400x700")
     root.minsize(700, 400)
 
     if HAS_SV_TTK:
@@ -588,13 +590,52 @@ def show_gui(original_image=None, text=None):
     # OCR Engine Combobox
     ocr_engine_combo = ttk.Combobox(
         ocr_engine_frame,
-        values=["EasyOCR", "PyTesseract", "LatexOCR"],
+        values=["PyTesseract", "LatexOCR"],
         width=15,
         state="readonly"
     )
-    ocr_engine_combo.current(0)  # Set default to EasyOCR
+    ocr_engine_combo.current(0)  # Set default to PyTesseract
     ocr_engine_combo.pack(side=tk.LEFT)
     ocr_engine_combo.bind("<<ComboboxSelected>>", change_ocr_engine)
+
+    # Tesseract Language Selection
+    tesseract_lang_frame = tk.Frame(title_frame, bg="#e8e8ef")
+    tesseract_lang_frame.pack(side=tk.LEFT, padx=10)
+    
+    tesseract_lang_label = tk.Label(tesseract_lang_frame, text="Language:", bg="#e8e8ef", font=("Segoe UI", 10))
+    tesseract_lang_label.pack(side=tk.LEFT, padx=(0, 5))
+    all_labels.append(tesseract_lang_label)
+    
+    # Common languages with descriptions
+    tesseract_languages = [
+        "eng - English",
+        "fra - French",
+        "deu - German",
+        "spa - Spanish",
+        "ita - Italian",
+        "por - Portuguese",
+        "nld - Dutch",
+        "rus - Russian",
+        "chi_sim - Chinese Simplified",
+        "chi_tra - Chinese Traditional",
+        "jpn - Japanese",
+        "kor - Korean",
+        "ara - Arabic",
+        "hin - Hindi",
+        "tur - Turkish",
+        "vie - Vietnamese"
+    ]
+    
+    # Tesseract Language Combobox
+    tesseract_lang_combo = ttk.Combobox(
+        tesseract_lang_frame,
+        values=tesseract_languages,
+        width=20,
+        state="readonly"
+    )
+    tesseract_lang_combo.current(0)  # Set default to English
+    tesseract_lang_combo.pack(side=tk.LEFT)
+    tesseract_lang_combo.bind("<<ComboboxSelected>>", change_tesseract_language)
 
     # Theme toggle frame
     theme_frame = tk.Frame(title_frame, bg="#e8e8ef")
@@ -707,7 +748,7 @@ def show_gui(original_image=None, text=None):
         "original_image": original_image if original_image is not None else blank_image,
         "tk_img": None  # tk_img will be set later in resize_image
     }
-
+    
     def resize_image(event=None):
         w = canvas.winfo_width()
         h = canvas.winfo_height()
